@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useRef, useEffect } from "react"
 import * as THREE from "three"
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export default function ThreeScene() {
   const mountRef = useRef(null)
@@ -12,46 +13,56 @@ export default function ThreeScene() {
     // Scene setup
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false })
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
     
     const size = Math.min(500, window.innerWidth - 40)
     renderer.setSize(size, size)
     mountRef.current.appendChild(renderer.domElement)
 
-    // Create an icosahedron (20-sided polyhedron)
-    const geometry = new THREE.IcosahedronGeometry(1, 1)
+    // Create Torus Knot
+    const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16)
     const material = new THREE.MeshPhongMaterial({
-      color: 0xffd700,
+      color: 0x00ffff,
       shininess: 100,
       specular: 0xffffff,
-      flatShading: true,
+      flatShading: false,
     })
-    const icosahedron = new THREE.Mesh(geometry, material)
-    scene.add(icosahedron)
+    const torusKnot = new THREE.Mesh(geometry, material)
+    scene.add(torusKnot)
 
     // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.8)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
     scene.add(ambientLight)
 
-    // Add point light
-    const pointLight = new THREE.PointLight(0xffffff, 1.5)
-    pointLight.position.set(5, 5, 5)
-    scene.add(pointLight)
+    // Add point lights
+    const pointLight1 = new THREE.PointLight(0xff00ff, 1, 100)
+    pointLight1.position.set(5, 3, 5)
+    scene.add(pointLight1)
 
-    camera.position.z = 2.5
+    const pointLight2 = new THREE.PointLight(0x00ffff, 1, 100)
+    pointLight2.position.set(-5, -3, -5)
+    scene.add(pointLight2)
+
+    camera.position.z = 4
+
+    // Add OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.05
+    controls.rotateSpeed = 0.5
+    controls.minDistance = 3
+    controls.maxDistance = 6
 
     // Animation
     const animate = () => {
       requestAnimationFrame(animate)
-      icosahedron.rotation.x += 0.005
-      icosahedron.rotation.y += 0.005
+      torusKnot.rotation.x += 0.01
+      torusKnot.rotation.y += 0.01
+      controls.update()
       renderer.render(scene, camera)
     }
 
     animate()
-
-
-    
 
     // Handle resize
     const handleResize = () => {
@@ -64,7 +75,9 @@ export default function ThreeScene() {
     window.addEventListener("resize", handleResize)
 
     return () => {
-      mountRef.current?.removeChild(renderer.domElement)
+      if (mountRef.current) {
+        mountRef.current.removeChild(renderer.domElement)
+      }
       window.removeEventListener("resize", handleResize)
     }
   }, [])
